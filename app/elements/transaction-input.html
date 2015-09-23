@@ -1,0 +1,101 @@
+<link rel="import" href="../scripts/transaction.js">
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="transaction-input">
+    <template>
+        <style>
+        :host {
+            display: block;
+        }
+        
+        .input-wrapper {
+            padding-left: 70px;
+        }
+        
+        paper-input {
+            display: inline-block;
+            width: 65%;
+            margin-bottom:15px;
+            --paper-input-container: {
+                padding-bottom: 0;
+            }
+            ;
+            /* These styles are not DRY :( */
+            --paper-input-container-label: {
+                font-size: 20px;
+                font-family: 'Roboto Slab', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+                font-weight: normal;
+                color: #9E9E9E;
+            }
+            ;
+            --paper-input-container-input: {
+                font-size: 20px;
+                font-family: 'Roboto Slab', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            }
+            ;
+            --paper-input-container-underline: {
+                top: 7px;
+                background: #9E9E9E;
+            }
+            ;
+            --paper-input-container-underline-focus: {
+                top: 7px;
+            }
+            ;
+        }
+        
+        paper-input[focused] + paper-button,
+        paper-button[focused] {
+            background: var(--default-primary-color);
+            color: var(--text-primary-color);
+        }
+        
+        paper-button {
+            background: #E0E0E0;
+            color: #9E9E9E;
+            font-size: 14px;
+            width:10%;
+        }
+        
+        paper-button[focused] {
+            /* https://github.com/PolymerElements/paper-button/pull/43 */
+            outline-width: 3px;
+        }
+        </style>
+        <div class="input-wrapper layout vertical">
+            <paper-input id="transactionInput" no-label-float label="Add store name" on-keydown="_checkAdd"></paper-input>
+            <paper-input id="transactionAmount" no-label-float label="Add amount of transaction" on-keydown="_checkAdd"></paper-input>
+            <paper-button id="transactionSubmit" on-tap="_add">Add</paper-button>
+        </div>
+    </template>
+    <script>
+    class TransactionInput {
+        beforeRegister() {
+            this.is = 'transaction-input';
+        }
+
+        // Listen for ENTER key
+        _checkAdd(e) {
+            if (e.keyCode === 13) {
+                this._add();
+            }
+        }
+
+        _add() {
+            let transactionStore = this.$.transactionInput;
+            let transactionAmount = this.$.transactionAmount;
+            let currentDate = new Date();
+
+            if (transactionStore.value && transactionAmount.value) {
+                var transaction = new Transaction(transactionStore.value, transactionAmount.value, currentDate.toDateString());
+        	    this.fire('add-transaction', {value: transaction});
+        		transactionStore.value = null;
+                transactionAmount.value = null;
+        	}
+        }
+    }
+    Polymer(TransactionInput);
+    </script>
+</dom-module>

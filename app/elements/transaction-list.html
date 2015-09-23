@@ -1,0 +1,72 @@
+<link rel="import" href="transaction-item.html">
+<dom-module id="transaction-list">
+    <template>
+        <style>
+        :host {
+            display: block;
+        }
+        
+        .no-more-msg {
+            min-height: 40px;
+            font-family: 'Roboto Slab';
+            font-size: 20px;
+            color: #BDBDBD;
+            cursor: default;
+            padding-left: 67px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        transaction-item:first-of-type {
+            margin-top: 0;
+        }
+        
+        transaction-item {
+            margin: 16px 0;
+        }
+        </style>
+
+        <p class="no-more-msg" hidden="[[_transactionsEmpty(transactions.length)]]">No transactions! You have not spend any money. Goodjob!</p>
+
+        <template is="dom-repeat"
+              items="{{transactions}}"
+              as="transaction"
+              filter="{{_computeFilter(filterBy)}}">
+      	<transaction-item transaction="{{transaction}}"></transaction-item>
+    </template>
+    </template>
+    <script>
+    class TransactionList {
+
+        beforeRegister() {
+            this.is = 'transaction-list';
+            this.properties = {
+            	transactions: Array,
+
+            	filterBy: {
+            		type: String,
+            		value: 'all'
+            	}
+            };
+        }
+
+        _transactionsEmpty(length) {
+        	return !!length;
+        }
+
+        _computeFilter(filterBy) {
+        	if (filterBy) {
+
+        		if (filterBy === 'all') {
+        			return function(item) {
+        				return item;
+        			};
+        		}
+        	}
+        }
+    }
+    Polymer(TransactionList);
+    </script>
+</dom-module>

@@ -1,0 +1,134 @@
+<link rel="import" href="../../bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="../../bower_components/firebase-element/firebase-auth.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/scale-up-animation.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/fade-out-animation.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/iron-localstorage/iron-localstorage.html">
+
+<dom-module id="transaction-data">
+	<template>
+		<style>
+			paper-dialog {
+				padding: 32px;
+			}
+			.google-sign-in {
+				display: inline-block;
+				background: #4285f4;
+				color: white;
+				width: 190px;
+				border-radius: 5px;
+				white-space: nowrap;
+			}
+			.google-sign-in:hover {
+				cursor: pointer;
+			}
+			.google-sign-in-icon {
+				background: url('/images/google-sign-in/g-normal.png') transparent 5px 50% no-repeat;
+				display: inline-block;
+				vertical-align: middle;
+				width: 42px;
+				height: 42px;
+				border-right: #2265d4 1px solid;
+			}
+			.google-sign-in-label {
+				display: inline-block;
+				vertical-align: middle;
+				padding-left: 42px;
+				padding-right: 42px;
+				font-size: 14px;
+				font-weight: bold;
+				/* Use the Roboto font that is loaded in the <head> */
+				font-family: 'Roboto', sans-serif;
+			}
+		</style>
+	    <firebase-auth id="auth"
+            location="{{location}}"
+            provider="google"
+            user="{{user}}">
+    	</firebase-auth>
+		<firebase-collection location="{{userLocation}}"
+	        ref="{{ref}}"
+	        data="{{fbTransactions}}"
+	        on-firebase-value="_firebaseLoaded"
+	        log>
+    	</firebase-collection>
+
+    	<!-- Backfill todos from localstorage. This prevents an initial flash while
+         we're waiting to hear from Firebase, and it lets the user see their
+         old todos if they start the app offline.
+         This SHOULD NOT write to Firebase. If the user has cleared their
+         localstorage, it should not nullify everything saved in Firebase. -->
+    	<iron-localstorage name="financer"
+            on-iron-localstorage-load="_backupLoaded"
+            value="{{backupTransactions}}">
+    	</iron-localstorage>
+
+    	<paper-dialog modal
+            opened="{{!user}}"
+            entry-animation="scale-up-animation"
+            exit-animation="fade-out-animation">
+      	<h2>Oh hai! Please sign in</h2>
+      	<div>
+    		<div class="google-sign-in"
+            	tabindex="0"
+            	on-tap="signIn">
+          		<span class="google-sign-in-icon"></span>
+         		<span class="google-sign-in-label">Google</span>
+        	</div>
+      	</div>
+    </paper-dialog>
+
+	</template>
+	<script>
+		class TransactionData {
+			
+			beforeRegister() {
+				this.is = 'transaction-data';
+				this.properties = {
+					transactions: {
+			          notify: true
+			        },
+			        user: {
+			          observer: '_userChanged'
+			        },
+			        _firebaseConnected: {
+			          value: false
+			        }
+				};
+			}
+
+			signIn() {
+				this.$.auth.login();
+			}
+
+			signOut() {
+				this.ref.unauth();
+        		this.user = null;
+			}
+
+			// setup user ref in Firebase if login succeeds
+			_userChanged(user) {
+				if (user) {
+					this.userLocation = [
+						this.location, 'users', this.user.uid
+					].join('/');
+				}
+			}
+
+			_firebaseLoaded() {
+				this._firebaseConnected = true;
+				this.transactions = this.fbTransactions;
+				this.backupTransactions = this.fbTransactions;
+				this.linkPaths('fbTransactions', 'transactions');
+        		this.linkPaths('backupTransactions', 'transactions');
+			}
+
+			_backupLoaded() {
+				if (!this._firebaseConnected) {
+					this.transactions = this.backupTransactions.slice();
+				}
+			}
+		}
+		Polymer(TransactionData);
+	</script>
+</dom-module>
